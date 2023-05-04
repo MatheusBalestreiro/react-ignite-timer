@@ -1,5 +1,5 @@
-import { Play } from "phosphor-react";
-import { CountdownContainer, FormContainer, HomeContainer, MinutesAmountInput, Separator, StartCountdownButton, TaskInput } from "./styles";
+import { HandPalm, Play } from "phosphor-react";
+import { CountdownContainer, FormContainer, HomeContainer, MinutesAmountInput, Separator, StartCountdownButton, StopCountdownButton, TaskInput } from "./styles";
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as zod from 'zod'
@@ -18,6 +18,7 @@ interface Cycle {
   task: string
   minutesAmount: number
   startDate: Date
+  interruptedDate?: Date
 }
 
 export function Home() {
@@ -48,6 +49,18 @@ export function Home() {
       clearInterval(interval)
     }
   }, [activeCycle])
+
+  function handleInterruptCycle() {
+    setCycles(cycles.map(cycle => {
+        if(cycle.id === activeCycleId) {
+          return {...cycle, interruptedDate: new Date() }
+        } else {
+          return cycle
+        }
+      }),
+    )
+    setActiveCycleId(null)
+  }
 
   function handleCreateNewCycle(data : NewCycleFormData){
     const id = String(new Date().getTime())
@@ -90,7 +103,7 @@ export function Home() {
       <form onSubmit={handleSubmit(handleCreateNewCycle)} action="">
         <FormContainer>
           <label htmlFor="task">Vou trabalhar em</label>
-          <TaskInput id="task" placeholder="Dê um nome para o seu projeto" list="task-suggestions" {...register('task')} />
+          <TaskInput disabled={!!activeCycle} id="task" placeholder="Dê um nome para o seu projeto" list="task-suggestions" {...register('task')} />
 
           <datalist id="task-suggestions">
             <option value="1"></option>  
@@ -99,7 +112,7 @@ export function Home() {
 
           </datalist>     
           <label htmlFor="minutesAmount">durante</label>
-          <MinutesAmountInput step={5} min={5} max={60} type="number" id="minutesAmount" placeholder="00" {...register('minutesAmount', { valueAsNumber: true })}/>
+          <MinutesAmountInput disabled={!!activeCycle} step={5} min={5} max={60} type="number" id="minutesAmount" placeholder="00" {...register('minutesAmount', { valueAsNumber: true })}/>
           <span>minutos.</span>
         </FormContainer>
 
@@ -111,10 +124,18 @@ export function Home() {
           <span>{seconds[1]}</span>
         </CountdownContainer>
 
-        <StartCountdownButton disabled={isSubmitDisabled} type="submit">
-          <Play size={24}/>
-          Começar
-        </StartCountdownButton>
+        { activeCycle ? (
+          <StopCountdownButton onClick={handleInterruptCycle} type="button">
+            <HandPalm size={24}/>
+            Interromper
+          </StopCountdownButton>
+        ) : (
+          <StartCountdownButton disabled={isSubmitDisabled} type="submit">
+              <Play size={24}/>
+              Começar
+          </StartCountdownButton>
+        ) }
+        
       </form>
     </HomeContainer>
   )
